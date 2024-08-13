@@ -20,12 +20,30 @@ print(f"@{bot.get_me().username} Connected")
 print("\n╭─── [ LOG ]")
 app = Flask(__name__)
 
+# Webhook setup
+def set_webhook():
+    webhook_url = os.getenv('WEBHOOK_URL')
+    bot.remove_webhook()
+    bot.set_webhook(url=webhook_url)
+
+@app.before_first_request
+def on_start():
+    set_webhook()
+    print('Webhook set')
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    json_str = request.get_data().decode('UTF-8')
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return jsonify(success=True)
+
 
 # Functions
 # Fetch User Member or Not
 def is_member(user_id):
     try:
-        member_status = bot.get_chat_member('-1001581212582', user_id)
+        member_status = bot.get_chat_member('-1002166457568', user_id)
         return member_status.status in ['member', 'administrator', 'creator']
     except:
         return False
@@ -122,8 +140,8 @@ def send_welcome(message):
 
     inline_keyboard = telebot.types.InlineKeyboardMarkup()
     inline_keyboard.row(
-     telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/+Gh5Cq7m-V003ZjY1"),
-     telebot.types.InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="tg://user?id=1008848605")
+     telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/DEVELOPER_RADHA"),
+     telebot.types.InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="tg://user?id=6335525003")
     )
 
     bot.send_message(
@@ -318,13 +336,7 @@ def health_check():
 if __name__ == "__main__":
     # Start Flask app in a separate thread
     def run_flask():
-        app.run(host='0.0.0.0', port=8000)
+        app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
 
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
-
-    # Start polling for Telegram updates
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        print(f"Error in bot polling: {str(e)}")
