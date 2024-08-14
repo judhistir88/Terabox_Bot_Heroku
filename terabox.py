@@ -20,23 +20,19 @@ print(f"@{bot.get_me().username} Connected")
 print("\n╭─── [ LOG ]")
 app = Flask(__name__)
 
-# Webhook setup
+# Webhook
+@app.route('/set_webhook', methods=['GET'])
 def set_webhook():
-    webhook_url = os.getenv('WEBHOOK_URL')
-    bot.remove_webhook()
-    bot.set_webhook(url=webhook_url)
-
-@app.before_first_request
-def on_start():
-    set_webhook()
-    print('Webhook set')
+    bot.remove_webhook()  # Remove any existing webhook
+    bot.set_webhook(url=os.getenv('WEBHOOK_URL'))  # Set the new webhook
+    return "Webhook has been set", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    json_str = request.get_data().decode('UTF-8')
-    update = telebot.types.Update.de_json(json_str)
+    update = telebot.types.Update.de_json(request.get_json())
     bot.process_new_updates([update])
-    return jsonify(success=True)
+    return 'ok', 200
+
 
 
 # Functions
@@ -290,7 +286,7 @@ def handle_message(message):
             )
         )
         return
-        
+
     video_url = message.text
     chat_id = message.chat.id
     user_mention = f"<a href='tg://user?id={user.id}'>{user.first_name}</a>"
