@@ -3,19 +3,20 @@ import re
 import requests
 import telebot
 from time import time
+import config
 from flask import Flask, request, jsonify
 from threading import Thread
 import pymongo
 
 # DB Connetion
-mongo_client = pymongo.MongoClient(os.getenv('MONGO_URI'))
+mongo_client = pymongo.MongoClient(config.MONGO_URI)
 db = mongo_client['terabox_tg-bot']
 users_collection = db['users']
 banned_users_collection = db['banned_users']
 print('DB Connected')
 
 # Bot Connetion
-bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
+bot = telebot.TeleBot(config.BOT_TOKEN)
 print(f"@{bot.get_me().username} Connected")
 print("\n╭─── [ LOG ]")
 app = Flask(__name__)
@@ -156,7 +157,7 @@ def send_welcome(message):
 @bot.message_handler(commands=['ban'])
 def ban_user(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    if str(message.from_user.id) != os.getenv('OWNER_ID'):
+    if str(message.from_user.id) != config.BOT_TOKEN:
         bot.reply_to(message, "ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴜᴛʜᴏʀɪꜱᴇᴅ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ")
         return
 
@@ -177,7 +178,7 @@ def ban_user(message):
 @bot.message_handler(commands=['unban'])
 def unban_user(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    if str(message.from_user.id) != os.getenv('OWNER_ID'):
+    if str(message.from_user.id) != config.BOT_TOKEN:
         bot.reply_to(message, "ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴜᴛʜᴏʀɪꜱᴇᴅ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ")
         return
 
@@ -198,7 +199,7 @@ def unban_user(message):
 @bot.message_handler(commands=['broadcast'])
 def broadcast_message(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    if str(message.from_user.id) != os.getenv('OWNER_ID'):
+    if str(message.from_user.id) != config.BOT_TOKEN:
         bot.reply_to(message, "You are not authorized to use this command.")
         return
     bot.reply_to(message, 'ᴘʀᴏᴠɪᴅᴇ ᴀ ᴍᴇꜱꜱᴀɢᴇ / ᴍᴇᴅɪᴀ ᴛᴏ ʙʀᴏᴀᴅᴄᴀꜱᴛ', reply_markup=telebot.types.ForceReply(selective=True))
@@ -332,7 +333,7 @@ def health_check():
 if __name__ == "__main__":
     # Start Flask app in a separate thread
     def run_flask():
-        app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+        app.run(host='0.0.0.0', port=config.PORT)
 
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
