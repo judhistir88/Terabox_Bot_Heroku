@@ -34,13 +34,11 @@ def webhook():
     bot.process_new_updates([update])
     return 'ok', 200
 
-
-
 # Functions
 # Fetch User Member or Not
 def is_member(user_id):
     try:
-        member_status = bot.get_chat_member('-1002166457568', user_id)
+        member_status = bot.get_chat_member('', user_id)
         return member_status.status in ['member', 'administrator', 'creator']
     except:
         return False
@@ -49,7 +47,7 @@ def is_member(user_id):
 def format_progress_bar(filename, percentage, done, total_size, status, speed, user_mention, user_id):
     bar_length = 10
     filled_length = int(bar_length * percentage / 100)
-    bar = '★' * filled_length + '☆' * (bar_length - filled_length)
+    bar = 'I' * filled_length + ':' * (bar_length - filled_length)
 
     def format_size(size):
         size = int(size)
@@ -118,8 +116,6 @@ def download_video(url, chat_id, message_id, user_mention, user_id):
 
     return video_path, video_title, total_length
 
-
-
 # Start command
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -137,8 +133,8 @@ def send_welcome(message):
 
     inline_keyboard = telebot.types.InlineKeyboardMarkup()
     inline_keyboard.row(
-     telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/DEVELOPER_RADHA"),
-     telebot.types.InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="tg://user?id=6335525003")
+     telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/"),
+     telebot.types.InlineKeyboardButton("ᴅᴇᴠᴇʟᴏᴘᴇʀ ⚡️", url="tg://user?id=")
     )
 
     bot.send_message(
@@ -259,7 +255,6 @@ def get_user_ids():
     user_ids = [user['user_id'] for user in users_collection.find()]
     return user_ids
 
-
 # Handle messages
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -271,10 +266,9 @@ def handle_message(message):
 
     bot.send_chat_action(message.chat.id, 'typing')
 
-
     # Check if user is banned
     if banned_users_collection.find_one({'user_id': user.id}):
-        bot.send_message(message.chat.id, "You are banned from using this bot.")
+        bot.send_message(message.chat.id, "You are banned from using this bot contact Owner.")
         return
 
     # Check User Member or Not
@@ -283,7 +277,7 @@ def handle_message(message):
             message.chat.id,
             "ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ᴍʏ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴜsᴇ ᴍᴇ.",
             reply_markup=telebot.types.InlineKeyboardMarkup().add(
-                telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/+Gh5Cq7m-V003ZjY1")
+                telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/")
             )
         )
         return
@@ -299,12 +293,10 @@ def handle_message(message):
             video_path, video_title, video_size = download_video(video_url, chat_id, progress_msg.message_id, user_mention, user_id)
             bot.edit_message_text('sᴇɴᴅɪɴɢ ʏᴏᴜ ᴛʜᴇ ᴍᴇᴅɪᴀ...🤤', chat_id, progress_msg.message_id)
 
-
             video_size_mb = video_size / (1024 * 1024)
 
             dump_channel_video = bot.send_video(os.getenv('DUMP_CHAT_ID'), open(video_path, 'rb'), caption=f"✨ {video_title}\n📀 {video_size_mb:.2f} MB\n👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : {user_mention}\n📥 ᴜsᴇʀ ʟɪɴᴋ: tg://user?id={user_id}", parse_mode='HTML')
             bot.copy_message(chat_id, os.getenv('DUMP_CHAT_ID'), dump_channel_video.message_id)
-
 
             bot.send_sticker(chat_id, "CAACAgIAAxkBAAEZdwRmJhCNfFRnXwR_lVKU1L9F3qzbtAAC4gUAAj-VzApzZV-v3phk4DQE")
             users_collection.update_one(
