@@ -44,10 +44,10 @@ def is_member(user_id):
         return False
 
 # Function to format the progress bar
-def format_progress_bar(filename, percentage, done, total_size, status, speed, user_mention, user_id):
-    bar_length = 10
+def format_progress_bar(filename, percentage, done, total_size, speed):
+    bar_length = 20  # Increase the bar length for smoother progress
     filled_length = int(bar_length * percentage / 100)
-    bar = 'I' * filled_length + ':' * (bar_length - filled_length)
+    bar = '█' * filled_length + '-' * (bar_length - filled_length)
 
     def format_size(size):
         size = int(size)
@@ -61,12 +61,10 @@ def format_progress_bar(filename, percentage, done, total_size, status, speed, u
             return f"{size / 1024 ** 3:.2f} GB"
 
     return (
-        f"┏ ғɪʟᴇɴᴀᴍᴇ: <b>{filename}</b>\n"
-        f"┠ [{bar}] {percentage:.2f}%\n"
-        f"┠ ᴘʀᴏᴄᴇssᴇᴅ: {format_size(done)} ᴏғ {format_size(total_size)}\n"
-        f"┠ sᴛᴀᴛᴜs: <b>{status}</b>\n"
-        f"┠ sᴘᴇᴇᴅ: <b>{format_size(speed)}/s</b>\n"
-        f"┖ ᴜsᴇʀ: {user_mention} | ɪᴅ: <code>{user_id}</code>"
+        f"File: {filename}\n"
+        f"[{bar}] {percentage:.2f}%\n"
+        f"Processed: {format_size(done)} of {format_size(total_size)}\n"
+        f"Speed: {format_size(speed)}/s"
     )
 
 # Function to download video
@@ -91,14 +89,13 @@ def download_video(url, chat_id, message_id, user_mention, user_id):
     max_size = 1.5 * 1024 * 1024 * 1024  # 1.5 GB in bytes
     total_length = int(total_length)
     if total_length > max_size:
-        raise Exception('The file size exceeds the maximum allowed size of 1.4 GB.')
+        raise Exception('The file size exceeds the maximum allowed size of 1.5 GB.')
 
     with open(video_path, 'wb') as video_file:
         video_response = requests.get(fast_download_link, stream=True)
 
         downloaded_length = 0
         start_time = time()
-        last_percentage_update = 0
         for chunk in video_response.iter_content(chunk_size=4096):
             downloaded_length += len(chunk)
             video_file.write(chunk)
@@ -106,22 +103,16 @@ def download_video(url, chat_id, message_id, user_mention, user_id):
             percentage = 100 * downloaded_length / total_length
             speed = downloaded_length / elapsed_time
 
-            if percentage - last_percentage_update >= 7:  # update every 7%
-                progress = format_progress_bar(
-                    video_title,
-                    percentage,
-                    downloaded_length,
-                    total_length,
-                    'Downloading',
-                    speed,
-                    user_mention,
-                    user_id
-                )
-                bot.edit_message_text(progress, chat_id, message_id, parse_mode='HTML')
-                last_percentage_update = percentage
-
+            progress = format_progress_bar(
+                video_title,
+                percentage,
+                downloaded_length,
+                total_length,
+                speed
+            )
+            bot.edit_message_text(progress, chat_id, message_id)
+    
     return video_path, video_title, total_length
-
 # Start command
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
