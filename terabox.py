@@ -2,7 +2,7 @@ import os
 import re
 import requests
 import telebot
-from time import time
+from time import time, sleep
 import config
 from flask import Flask, request, jsonify
 from threading import Thread
@@ -48,6 +48,7 @@ def format_progress_bar(filename, percentage, done, total_size, speed):
     bar_length = 20  # Increase the bar length for smoother progress
     filled_length = int(bar_length * percentage / 100)
     bar = '█' * filled_length + '-' * (bar_length - filled_length)
+    bar_lines = [bar[i:i+5] for i in range(0, len(bar), 5)]
 
     def format_size(size):
         size = int(size)
@@ -62,7 +63,7 @@ def format_progress_bar(filename, percentage, done, total_size, speed):
 
     return (
         f"File: {filename}\n"
-        f"[{bar}] {percentage:.2f}%\n"
+        f"[{bar_lines[0]}]\n[{bar_lines[1]}]\n[{bar_lines[2]}]\n[{bar_lines[3]}] {percentage:.2f}%\n"
         f"Processed: {format_size(done)} of {format_size(total_size)}\n"
         f"Speed: {format_size(speed)}/s"
     )
@@ -96,23 +97,28 @@ def download_video(url, chat_id, message_id, user_mention, user_id):
 
         downloaded_length = 0
         start_time = time()
+        last_update_time = start_time
         for chunk in video_response.iter_content(chunk_size=4096):
             downloaded_length += len(chunk)
             video_file.write(chunk)
-            elapsed_time = time() - start_time
-            percentage = 100 * downloaded_length / total_length
-            speed = downloaded_length / elapsed_time
+            current_time = time()
+            elapsed_time = current_time - start_time
+            if current_time - last_update_time >= 5:
+                percentage = 100 * downloaded_length / total_length
+                speed = downloaded_length / elapsed_time
 
-            progress = format_progress_bar(
-                video_title,
-                percentage,
-                downloaded_length,
-                total_length,
-                speed
-            )
-            bot.edit_message_text(progress, chat_id, message_id)
+                progress = format_progress_bar(
+                    video_title,
+                    percentage,
+                    downloaded_length,
+                    total_length,
+                    speed
+                )
+                bot.edit_message_text(progress, chat_id, message_id)
+                last_update_time = current_time
     
     return video_path, video_title, total_length
+
 # Start command
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -246,6 +252,7 @@ def process_broadcast_message(message):
 ᴜɴꜱᴜᴄᴄᴇꜱꜱꜰᴜʟ: <code>{unsuccessful_users}</code>""",
         parse_mode='HTML'
     )
+
 # Get User IDs
 def get_user_ids():
     # Get user IDs from your database
@@ -292,7 +299,7 @@ def handle_message(message):
 
             video_size_mb = video_size / (1024 * 1024)
 
-            dump_channel_video = bot.send_video(os.getenv('DUMP_CHAT_ID'), open(video_path, 'rb'), caption=f"✨ {video_title}\n📀 {video_size_mb:.2f} MB\n👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : {user_mention}\n📥 ᴜsᴇʀ ʟɪɴᴋ: tg://user?id={user_id}", parse_mode='HTML')
+            dump_channel_video = bot.send_video(os.getenv('DUMP_CHAT_ID'), open(video_path, 'rb'), caption=f"✨ {video_title}\n📀 {video_size_mb:.2f} MB\n👤 ʟᴇᴇᴄʜᴇᴅ ʙʏ : {user_menti[...]")
             bot.copy_message(chat_id, os.getenv('DUMP_CHAT_ID'), dump_channel_video.message_id)
 
             bot.send_sticker(chat_id, "CAACAgIAAxkBAAEZdwRmJhCNfFRnXwR_lVKU1L9F3qzbtAAC4gUAAj-VzApzZV-v3phk4DQE")
