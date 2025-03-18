@@ -7,6 +7,8 @@ import config
 from flask import Flask, request, jsonify
 from threading import Thread
 import pymongo
+import random
+from progress_bars import get_random_progress_bar  # Import the random progress bar function
 
 # DB Connetion
 mongo_client = pymongo.MongoClient(config.MONGO_URI)
@@ -45,10 +47,12 @@ def is_member(user_id):
 
 # Function to format the progress bar
 def format_progress_bar(filename, percentage, done, total_size, speed):
-    bar_length = 20  # Increase the bar length for smoother progress
-    filled_length = int(bar_length * percentage / 100)
-    bar = '█' * filled_length + '-' * (bar_length - filled_length)
-    bar_lines = [bar[i:i+5] for i in range(0, len(bar), 5)]
+    bar_length = 10  # Set the bar length to 10
+    bar_style = get_random_progress_bar()  # Get a random progress bar style
+    filled_char = bar_style[0]
+    empty_char = bar_style[1]
+    filled_length = int(bar_length * (percentage // 10) / 10)  # Show progress in 10% increments
+    bar = filled_char * filled_length + empty_char * (bar_length - filled_length)
 
     def format_size(size):
         size = int(size)
@@ -63,7 +67,7 @@ def format_progress_bar(filename, percentage, done, total_size, speed):
 
     return (
         f"File: {filename}\n"
-        f"[{bar_lines[0]}]\n[{bar_lines[1]}]\n[{bar_lines[2]}]\n[{bar_lines[3]}] {percentage:.2f}%\n"
+        f"[{bar}] {percentage:.2f}%\n"
         f"Processed: {format_size(done)} of {format_size(total_size)}\n"
         f"Speed: {format_size(speed)}/s"
     )
