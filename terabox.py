@@ -82,37 +82,43 @@ def download_video(url, chat_id, message_id, user_mention, user_id):
     video_title = re.sub(r'[<>:"/\\|?*]+', '', data['response'][0]['title'])
     video_path = os.path.join('Videos', f"{video_title}.mp4")
 
+    # Check the file size before downloading
+    head_response = requests.head(fast_download_link)
+    total_length = head_response.headers.get('content-length')
+    if total_length is None:
+        raise Exception('Could not determine the file size.')
+
+    max_size = 1.5 * 1024 * 1024 * 1024  # 1.5 GB in bytes
+    total_length = int(total_length)
+    if total_length > max_size:
+        raise Exception('The file size exceeds the maximum allowed size of 1.4 GB.')
+
     with open(video_path, 'wb') as video_file:
         video_response = requests.get(fast_download_link, stream=True)
 
-        total_length = video_response.headers.get('content-length')
-        if total_length is None:  # no content length header
-            video_file.write(video_response.content)
-        else:
-            downloaded_length = 0
-            total_length = int(total_length)
-            start_time = time()
-            last_percentage_update = 0
-            for chunk in video_response.iter_content(chunk_size=4096):
-                downloaded_length += len(chunk)
-                video_file.write(chunk)
-                elapsed_time = time() - start_time
-                percentage = 100 * downloaded_length / total_length
-                speed = downloaded_length / elapsed_time
+        downloaded_length = 0
+        start_time = time()
+        last_percentage_update = 0
+        for chunk in video_response.iter_content(chunk_size=4096):
+            downloaded_length += len(chunk)
+            video_file.write(chunk)
+            elapsed_time = time() - start_time
+            percentage = 100 * downloaded_length / total_length
+            speed = downloaded_length / elapsed_time
 
-                if percentage - last_percentage_update >= 7:  # update every 7%
-                    progress = format_progress_bar(
-                        video_title,
-                        percentage,
-                        downloaded_length,
-                        total_length,
-                        'Downloading',
-                        speed,
-                        user_mention,
-                        user_id
-                    )
-                    bot.edit_message_text(progress, chat_id, message_id, parse_mode='HTML')
-                    last_percentage_update = percentage
+            if percentage - last_percentage_update >= 7:  # update every 7%
+                progress = format_progress_bar(
+                    video_title,
+                    percentage,
+                    downloaded_length,
+                    total_length,
+                    'Downloading',
+                    speed,
+                    user_mention,
+                    user_id
+                )
+                bot.edit_message_text(progress, chat_id, message_id, parse_mode='HTML')
+                last_percentage_update = percentage
 
     return video_path, video_title, total_length
 
