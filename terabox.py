@@ -40,7 +40,7 @@ def webhook():
 # Fetch User Member or Not
 def is_member(user_id):
     try:
-        member_status = bot.get_chat_member('', user_id)
+        member_status = bot.get_chat_member('-1001702284560', user_id)
         return member_status.status in ['member', 'administrator', 'creator']
     except:
         return False
