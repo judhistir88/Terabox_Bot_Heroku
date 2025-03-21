@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import telebot
+import logging
 from time import time, sleep
 import config
 from flask import Flask, request, jsonify
@@ -10,7 +11,10 @@ import pymongo
 import random
 from progress_bars import get_random_progress_bar  # Import the random progress bar function
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 # DB Connetion
+
 mongo_client = pymongo.MongoClient(config.MONGO_URL)
 db = mongo_client['terabox_tg-bot']
 users_collection = db['users']
@@ -126,34 +130,38 @@ def download_video(url, chat_id, message_id, user_mention, user_id):
 # Start command
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    user = message.from_user
+    try:
+        user = message.from_user
 
-    bot.send_chat_action(message.chat.id, 'typing')
+        bot.send_chat_action(message.chat.id, 'typing')
 
-# Store User To DB
-    if not users_collection.find_one({'user_id': user.id}):
-        users_collection.insert_one({
-            'user_id': user.id,
-            'first_name': user.first_name,
-            'downloads': 0
-        })
+        # Store User To DB
+        if not users_collection.find_one({'user_id': user.id}):
+            users_collection.insert_one({
+                'user_id': user.id,
+                'first_name': user.first_name,
+                'downloads': 0
+            })
 
-    inline_keyboard = telebot.types.InlineKeyboardMarkup()
-    inline_keyboard.row(
-     telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/MCS4U2")
-    )
+        inline_keyboard = telebot.types.InlineKeyboardMarkup()
+        inline_keyboard.row(
+            telebot.types.InlineKeyboardButton("ᴊᴏɪɴ ❤️🚀", url=f"https://t.me/MCS4U2")
+        )
 
-    bot.send_message(
-        message.chat.id, 
-        (
-            f"ᴡᴇʟᴄᴏᴍᴇ, <a href='tg://user?id={user.id}'>{user.first_name}</a>.\n\n"
-            "🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n"
-            "sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs\n"
-            "ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨"
-        ), 
-        parse_mode='HTML', 
-        reply_markup=inline_keyboard
-    )
+        bot.send_message(
+            message.chat.id, 
+            (
+                f"ᴡᴇʟᴄᴏᴍᴇ, <a href='tg://user?id={user.id}'>{user.first_name}</a>.\n\n"
+                "🌟 ɪ ᴀᴍ ᴀ ᴛᴇʀᴀʙᴏx ᴅᴏᴡɴʟᴏᴀᴅᴇʀ ʙᴏᴛ.\n"
+                "sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴛᴇʀᴀʙᴏx ʟɪɴᴋ ɪ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴡɪᴛʜɪɴ ғᴇᴡ sᴇᴄᴏɴᴅs\n"
+                "ᴀɴᴅ sᴇɴᴅ ɪᴛ ᴛᴏ ʏᴏᴜ ✨"
+            ), 
+            parse_mode='HTML', 
+            reply_markup=inline_keyboard
+        )
+    except Exception as e:
+        logging.error(f"Error in /start command: {e}")
+        bot.send_message(message.chat.id, "An error occurred. Please try again later.")
 
 # Ban command
 @bot.message_handler(commands=['ban'])
