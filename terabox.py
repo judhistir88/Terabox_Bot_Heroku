@@ -11,7 +11,7 @@ import random
 from progress_bars import get_random_progress_bar  # Import the random progress bar function
 
 # DB Connetion
-mongo_client = pymongo.MongoClient(config.MONGO_URI)
+mongo_client = pymongo.MongoClient(config.MONGO_URL)
 db = mongo_client['terabox_tg-bot']
 users_collection = db['users']
 banned_users_collection = db['banned_users']
